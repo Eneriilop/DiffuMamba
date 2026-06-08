@@ -10,7 +10,7 @@ MAX_SEQ_LEN    = 128
 
 # --- Modello ---
 HIDDEN_SIZE = 512    # dimensione hidden (BERT medio - paper On the impact of pretraining data ...)
-NUM_LAYERS  = 8       # numero di blocchi Bi-Mamba
+NUM_LAYERS  = 4       # numero di blocchi Bi-Mamba
 STATE_SIZE  = 16      # dimensione stato SSM interno di Mamba (default libreria)
 EXPAND      = 4       # expansion factor interno Mamba (default libreria 2)
 CONV_KERNEL = 4       # kernel conv 1D interna Mamba (default libreria)
@@ -26,8 +26,8 @@ MIN_TOKENS  = 6             # filtra sequenze con meno di N token (spazio-split)
 # --- Training ---
 MAX_SAMPLES  = None             #None         # 500 usato per test rapidi
 BATCH_SIZE   = 32        #32        # 8 usato per test rapidi
-TOTAL_STEPS  = 624_000         #50_000        # 100 usato per test rapidi
-WARMUP_STEPS = 6_000
+TOTAL_STEPS  = 208_000         #50_000        # 100 usato per test rapidi
+WARMUP_STEPS = 2_000
 LR           = 1e-4
 MASK_RATE    = 0.15   # probabilità base di mascherare un token (come BERT)
                       # nel diffusion viene campionato t e usato come rate variabile
