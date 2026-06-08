@@ -36,4 +36,4 @@ MASK_RATE    = 0.15   # probabilità base di mascherare un token (come BERT)
 OUTPUT_DIR   = "checkpoints"
 SAVE_EVERY   = 25_000   #salva checkpoint ogni N step (incluso ultimo)
 LOG_EVERY    = 50
-EVAL_EVERY   = 500
+EVAL_EVERY   = 10_000

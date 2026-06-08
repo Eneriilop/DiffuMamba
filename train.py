@@ -274,13 +274,15 @@ def train():
             print(f"[{step}] Checkpoint salvato: {path}")
 
 
-def evaluate(model, val_dl):
+def evaluate(model, val_dl, max_batches=200):
     # identico al training loop ma senza aggiornamento dei pesi e con torch.no_grad() per disabilitare la backprop e risparmiare memoria
     model.eval()
     total, n = 0.0, 0
     with torch.no_grad():
         for batch in val_dl:
-            input_ids      = batch["input_ids"].to(device)
+            if n >= max_batches:
+                break
+            input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)
             B = input_ids.size(0)
             t = torch.rand(B, device=device)
