@@ -9,10 +9,10 @@ PAD_TOKEN_ID   = 0                     # [PAD]
 MAX_SEQ_LEN    = 128
 
 # --- Modello ---
-HIDDEN_SIZE = 128     # dimensione hidden (piccolo: BERT-tiny usa 128)
-NUM_LAYERS  = 2       # numero di blocchi Bi-Mamba
+HIDDEN_SIZE = 512    # dimensione hidden (BERT medio - paper On the impact of pretraining data ...)
+NUM_LAYERS  = 8       # numero di blocchi Bi-Mamba
 STATE_SIZE  = 16      # dimensione stato SSM interno di Mamba (default libreria)
-EXPAND      = 2       # expansion factor interno Mamba (default libreria)
+EXPAND      = 4       # expansion factor interno Mamba (default libreria 2)
 CONV_KERNEL = 4       # kernel conv 1D interna Mamba (default libreria)
 
 # --- Dati ---
@@ -24,16 +24,16 @@ DATA_FORMAT = "csv"          # "csv" | "sentences" | "blocks"
 MIN_TOKENS  = 6             # filtra sequenze con meno di N token (spazio-split)
 
 # --- Training ---
-MAX_SAMPLES  = 10_000             #None         # 500 usato per test rapidi
+MAX_SAMPLES  = None             #None         # 500 usato per test rapidi
 BATCH_SIZE   = 32        #32        # 8 usato per test rapidi
-TOTAL_STEPS  = 50_000         #50_000        # 100 usato per test rapidi
-WARMUP_STEPS = 1_000
-LR           = 3e-4
+TOTAL_STEPS  = 624_000         #50_000        # 100 usato per test rapidi
+WARMUP_STEPS = 6_000
+LR           = 1e-4
 MASK_RATE    = 0.15   # probabilità base di mascherare un token (come BERT)
                       # nel diffusion viene campionato t e usato come rate variabile
 
 # --- Checkpoint ---
 OUTPUT_DIR   = "checkpoints"
-SAVE_EVERY   = [100, 200, 500, 1_000, 2_000, 5_000, 10_000, 25_000, 50_000]
+SAVE_EVERY   = 25_000   #salva checkpoint ogni N step (incluso ultimo)
 LOG_EVERY    = 50
 EVAL_EVERY   = 500

@@ -177,7 +177,7 @@ def train():
     model = DiffuMamba().to(device)
     print(f"Parametri: {model.count_params():,}")
  
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config.LR)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config.LR, weight_decay=0.01)
     scaler = GradScaler('cuda')  # AMP: mantiene stabilità numerica con float16
 
     # resume da checkpoint se esiste
@@ -268,7 +268,7 @@ def train():
             model.train()
 
         # checkpoint
-        if step in config.SAVE_EVERY:
+        if step % config.SAVE_EVERY == 0 or step == config.TOTAL_STEPS:
             path = os.path.join(config.OUTPUT_DIR, f"ckpt_step{step:06d}.pt")
             torch.save({"step": step, "model": model.state_dict(), "loss": loss.item()}, path)
             print(f"[{step}] Checkpoint salvato: {path}")
