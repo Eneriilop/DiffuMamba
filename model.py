@@ -48,6 +48,10 @@ class BiMambaBlock(nn.Module):
         residual = x
         x = self.norm(x)
         fwd = self.mamba_fwd(x)                     # left → right
+        """
+        Per la direzione backward, invertiamo la sequenza in input (flip su dimensione 1), applichiamo MambaMixer e poi invertiamo di nuovo l'output per riportarlo nell'ordine originale.
+        Implemetazione usata in Vision Mamba - Efficient Visual Representation Learning with Bidirectional State Space Model
+        """
         bwd = self.mamba_bwd(x.flip(1)).flip(1)     # right → left
         return residual + fwd + bwd                 # residual connection
 
