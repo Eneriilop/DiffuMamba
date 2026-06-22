@@ -160,10 +160,14 @@ def train():
     tokenizer = AutoTokenizer.from_pretrained(config.TOKENIZER_NAME)
 
     # dataset e split train/val 90/10
-    dataset = TextDataset(config.DATA_PATH, tokenizer, config.DATA_FORMAT)
-    val_size   = max(1, int(0.1 * len(dataset)))
-    train_size = len(dataset) - val_size
-    train_ds, val_ds = random_split(dataset, [train_size, val_size])
+    # dataset = TextDataset(config.DATA_PATH, tokenizer, config.DATA_FORMAT)
+    # val_size   = max(1, int(0.1 * len(dataset)))
+    # train_size = len(dataset) - val_size
+    # train_ds, val_ds = random_split(dataset, [train_size, val_size])
+
+    # Train sul dataset e validation su eval_3 
+    train_ds = TextDataset(config.DATA_PATH, tokenizer, config.DATA_FORMAT)
+    val_ds   = TextDataset(config.VAL_PATH, tokenizer, config.VAL_FORMAT)
 
     # dataloader assembla i batch con shuffle=true per il training
     # num_workers: tokenizzazione in parallelo su CPU mentre la GPU lavora

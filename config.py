@@ -21,19 +21,21 @@ CONV_KERNEL = 4       # kernel conv 1D interna Mamba (default libreria)
 #   "blocks"    → un file con blocchi di frasi separati da riga vuota
 DATA_PATH   = "data/train_1_orig.csv"
 DATA_FORMAT = "csv"          # "csv" | "sentences" | "blocks"
+VAL_PATH = "data/eval_3.csv"
+VAL_FORMAT = "csv"
 MIN_TOKENS  = 6             # filtra sequenze con meno di N token (spazio-split)
 
 # --- Training ---
-MAX_SAMPLES  = None             #None         # 500 usato per test rapidi
-BATCH_SIZE   = 32        #32        # 8 usato per test rapidi
-TOTAL_STEPS  = 208_000         #50_000        # 100 usato per test rapidi
-WARMUP_STEPS = 2_000
+MAX_SAMPLES  = None            
+BATCH_SIZE   = 32        
+TOTAL_STEPS  = 624_000        
+WARMUP_STEPS = 6_000
 LR           = 1e-4
 MASK_RATE    = 0.15   # probabilità base di mascherare un token (come BERT)
                       # nel diffusion viene campionato t e usato come rate variabile
 
 # --- Checkpoint ---
-OUTPUT_DIR   = "checkpoints"
+OUTPUT_DIR   = "checkpoints_3ep"
 SAVE_EVERY   = 25_000   #salva checkpoint ogni N step (incluso ultimo)
 LOG_EVERY    = 50
 EVAL_EVERY   = 10_000
