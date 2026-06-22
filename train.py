@@ -175,7 +175,7 @@ def train():
     num_workers = min(4, os.cpu_count() or 1)
     train_dl = DataLoader(train_ds, batch_size=config.BATCH_SIZE, shuffle=True,  num_workers=num_workers, pin_memory=True)
     val_dl   = DataLoader(val_ds,   batch_size=config.BATCH_SIZE, shuffle=False, num_workers=num_workers, pin_memory=True)
-    print(f"Train: {train_size} sequenze | Val: {val_size} sequenze")
+    print(f"Train: {train_ds} sequenze | Val: {val_ds} sequenze")
 
     # modello e ottimizzatore
     model = DiffuMamba().to(device)
