@@ -43,6 +43,7 @@ class BiMambaBlock(nn.Module):
         self.mamba_bwd = MambaMixer(mamba_cfg, layer_idx=layer_idx)
 
     # Normalizza, processa in entrambe le direzioni e somma i risultati con residual connection
+    # Ogni layer prende in input l'output del layer precedente (o l'embedding iniziale) e produce un output della stessa dimensione (con l'aggiunta dei risultati delle scan)
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (B, L, D)
         residual = x
@@ -65,15 +66,15 @@ class DiffuMamba(nn.Module):
     def __init__(self):
         super().__init__()
 
-        # MambaConfig di HuggingFace solo campi base - configurazione del modello
+        # MambaConfig di HuggingFace - configurazione del modello
         mamba_cfg = MambaConfig(
-            vocab_size=config.HIDDEN_SIZE,   # non usato direttamente, serve per init
+            vocab_size=config.HIDDEN_SIZE,   
             hidden_size=config.HIDDEN_SIZE,
             state_size=config.STATE_SIZE,
             num_hidden_layers=config.NUM_LAYERS,
             expand=config.EXPAND,
             conv_kernel=config.CONV_KERNEL,
-            use_mambapy=True                # usa mamba.py (Python vettorizzato, più veloce della fallback sequenziale)
+            use_mambapy=True                # uso mamba.py (Python vettorizzato, più veloce della fallback sequenziale)
                                             # Per i kernel CUDA nativi: pip install mamba-ssm causal-conv1d
         )
 
@@ -85,7 +86,7 @@ class DiffuMamba(nn.Module):
         )
 
         # Timestep embedding: t ∈ [0,1] → vettore D
-        # Il Timestep t è scalare: viene trasformato in vettore di dim HIDDEN_SIZE con un singolo layer lineare
+        # Il Timestep t è scalare: viene trasformato in vettore di dim HIDDEN_SIZE con un singolo layer lineare 
         self.time_emb = nn.Linear(1, config.HIDDEN_SIZE)
 
         # Stack di blocchi Bi-Mamba
@@ -100,7 +101,7 @@ class DiffuMamba(nn.Module):
         # LM head: proietta ogni vettore hidden (128) in un punteggio per ciascun token del vocabolario (31102)
         # Weight tying: condivide la stessa matrice di pesi con token_emb
         # → il vettore che rappresenta un token in input è lo stesso usato per predirlo in output
-        # → risparmia ~4M parametri e migliora la generalizzazione (standard in BERT, GPT-2)
+        # → risparmia ~16M parametri e migliora la generalizzazione (standard in BERT, GPT-2)
         self.lm_head = nn.Linear(config.HIDDEN_SIZE, 31102, bias=False)
         self.lm_head.weight = self.token_emb.weight
 
@@ -114,14 +115,14 @@ class DiffuMamba(nn.Module):
 
         # aggiungi timestep come bias sull'intera sequenza
         t_vec = self.time_emb(t.unsqueeze(1))            # (B, D)
-        x = x + t_vec.unsqueeze(1)                       # broadcast su L
+        x = x + t_vec.unsqueeze(1)                       # broadcast su L → tutti i token della sequenza ricevono lo stesso timestep t
 
         for layer in self.layers:
-            x = layer(x)
+            x = layer(x)                                 # Aggiornamento di x ad ogni layer Bi-Mamba
 
-        x = self.norm_out(x)
-        return self.lm_head(x)                           # (B, L, vocab_size)
+        x = self.norm_out(x)                             # Normalizzazione finale dopo tutti i layer (c'è una norm diversa interna ad ogni Mamba ma non è questa)
+        return self.lm_head(x)                           # (B, L, vocab_size) → proiezione sul vocabolario
 
-    # Conta il numero di parametri addestrabili (utile per debug e confronto con BERT)
+    # Conta il numero di parametri addestrabili (per debug e confronto con BERT)
     def count_params(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
