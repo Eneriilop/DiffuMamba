@@ -65,7 +65,7 @@ class TextDataset(Dataset):
         else:
             raise ValueError(f"DATA_FORMAT non riconosciuto: {fmt}")
 
-        # filtra frasi troppo corte (split su spazio, come da istruzioni supervisore)
+        # filtra frasi troppo corte (split su spazio)
         self.texts = [t for t in texts if len(t.split()) >= config.MIN_TOKENS]
 
         # limita il numero di campioni (per test rapidi, None = tutti)
@@ -115,6 +115,8 @@ def mask_tokens(input_ids: torch.Tensor, t: torch.Tensor, attention_mask: torch.
     """
     # probabilità di mask per ogni posizione: (B, 1) broadcast → (B, L)
     mask_prob = t.unsqueeze(1).expand_as(input_ids)
+    # bernoulli lancia un dado per ogni token: True con probabilità t, False altrimenti
+    # quindi mediamente il 15% dei token sarà mascherato se t=0.15, ma ogni token ha probabilità indipendente
     masked = torch.bernoulli(mask_prob).bool()
 
     # non maschera padding
@@ -123,6 +125,7 @@ def mask_tokens(input_ids: torch.Tensor, t: torch.Tensor, attention_mask: torch.
     # clona la sequenza originale e inserisce MASK_TOKEN_ID dove masked è True (ID 103)
     # la maschera servirà dopo per calcolare la loss solo sui token mascherati
     x_t = input_ids.clone()
+    # token 103 come BERT per i token mascherati
     x_t[masked] = config.MASK_TOKEN_ID
     return x_t, masked
 
@@ -238,21 +241,6 @@ def train():
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         scaler.step(optimizer)
         scaler.update()
-
-
-        # # forward modello
-        # logits = model(x_t, t)
-
-        # # loss e backward
-        # loss = compute_loss(logits, input_ids, masked)
-        # # azzera i gradienti, backward e step dell'ottimizzatore al passo precedente
-        # # calcola i gradienti con la backprop
-        # optimizer.zero_grad()
-        # loss.backward()
-        # # clippa i gradienti a norma massima 1.0 per stabilità
-        # torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        # # aggiorna i pesi del modello
-        # optimizer.step()
 
         step += 1
         running_loss += loss.item()
