@@ -16,10 +16,8 @@ Struttura output:
     checkpoint_050000/
       ...
 
-Poi esegui evaluate_all_checkpoints.py per calcolare Spearman ρ.
+Poi eseguiamo evaluate_all_checkpoints.py per calcolare Spearman ρ.
 
-Uso:
-  python3 probing_all_checkpoints.py
 """
 
 import os

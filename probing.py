@@ -18,7 +18,7 @@ Struttura output:
 
 Ogni TSV ha due colonne: y_pred, y_true
 
-Poi esegui evaluate_probing.py per calcolare R² e Pearson r.
+Poi eseguiamo evaluate_probing.py per calcolare R² e Pearson r.
 """
 
 import os
