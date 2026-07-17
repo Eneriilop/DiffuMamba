@@ -110,3 +110,28 @@ class DiffuMamba(nn.Module):
         # LM head con weight tying
         self.lm_head = nn.Linear(config.HIDDEN_SIZE, 31102, bias=False)
         self.lm_head.weight = self.token_emb.weight
+
+        # inizializzazione BERT-style per stabilità
+        nn.init.normal_(self.token_emb.weight, std=0.02)
+        nn.init.normal_(self.time_emb.weight, std=0.02)
+        nn.init.zeros_(self.time_emb.bias)
+
+
+    def forward(self, input_ids: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+        """
+        input_ids : (B, L)
+        t         : (B,)
+        returns   : (B, L, vocab_size)
+        """
+        x = self.token_emb(input_ids)          # (B, L, D)
+        t_vec = self.time_emb(t.unsqueeze(1))  # (B, D)
+        x = x + t_vec.unsqueeze(1)             # broadcast su L
+
+        for layer in self.layers:
+            x = layer(x)
+
+        x = self.norm_out(x)
+        return self.lm_head(x)                 # (B, L, vocab_size)
+
+    def count_params(self) -> int:
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)

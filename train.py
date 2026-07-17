@@ -23,6 +23,7 @@ from torch.amp import autocast, GradScaler
 from model import DiffuMamba
 import config
 import time
+from torch.utils.data import SequentialSampler
 
 # ── device ──────────────────────────────────────────────────
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,7 +67,10 @@ class TextDataset(Dataset):
             raise ValueError(f"DATA_FORMAT non riconosciuto: {fmt}")
 
         # filtra frasi troppo corte (split su spazio)
-        self.texts = [t for t in texts if len(t.split()) >= config.MIN_TOKENS]
+        #self.texts = [t for t in texts if len(t.split()) >= config.MIN_TOKENS]
+
+        #Nessun filtro
+        self.texts = texts
 
         # limita il numero di campioni (per test rapidi, None = tutti)
         if config.MAX_SAMPLES is not None:
@@ -157,6 +161,7 @@ def compute_loss(logits: torch.Tensor, input_ids: torch.Tensor, masked: torch.Te
 # ============================================================
 
 def train():
+
     os.makedirs(config.OUTPUT_DIR, exist_ok=True)
 
     # tokenizer da HuggingFace
@@ -176,9 +181,9 @@ def train():
     # num_workers: tokenizzazione in parallelo su CPU mentre la GPU lavora
     # pin_memory: trasferimento CPU→GPU più veloce
     num_workers = min(4, os.cpu_count() or 1)
-    train_dl = DataLoader(train_ds, batch_size=config.BATCH_SIZE, shuffle=True,  num_workers=num_workers, pin_memory=True)
+    train_dl = DataLoader(train_ds, batch_size=config.BATCH_SIZE, sampler=SequentialSampler(train_ds), num_workers=num_workers, pin_memory=True)
     val_dl   = DataLoader(val_ds,   batch_size=config.BATCH_SIZE, shuffle=False, num_workers=num_workers, pin_memory=True)
-    print(f"Train: {train_ds} sequenze | Val: {val_ds} sequenze")
+    print(f"Train: {len(train_ds)} sequenze | Val: {len(val_ds)} sequenze")
 
     # modello e ottimizzatore
     model = DiffuMamba().to(device)
@@ -198,44 +203,45 @@ def train():
 
     # training per step, non per epoche
     model.train()
-    step = start_step   # parte da 0 oppure dal checkpoint
+    step = start_step
     running_loss = 0.0
+    epoch = 0
     train_iter = iter(train_dl)
     t0 = time.time()
 
+    # salva checkpoint step 0 (modello non trainato)
+    path = os.path.join(config.OUTPUT_DIR, "ckpt_step000000.pt")
+    torch.save({"step": 0, "model": model.state_dict(), "loss": None}, path)
+    print(f"[0] Checkpoint step 0 salvato: {path}")
+
     while step < config.TOTAL_STEPS:
 
-        # ricarica iteratore se esaurito
         try:
             batch = next(train_iter)
         except StopIteration:
+            epoch += 1
+            val_loss = evaluate(model, val_dl)
+            print(f"[step {step} | fine epoca {epoch}] VAL loss={val_loss:.4f}")
+            model.train()
             train_iter = iter(train_dl)
-            batch = next(train_iter)
+            continue   # riparte dal while per prendere il primo batch della nuova epoca
 
         input_ids      = batch["input_ids"].to(device)
         attention_mask = batch["attention_mask"].to(device)
         B = input_ids.size(0)
 
-        # warmup: aumenta lr linearmente nei primi WARMUP_STEPS step
         if step < config.WARMUP_STEPS:
             for pg in optimizer.param_groups:
                 pg["lr"] = config.LR * (step + 1) / config.WARMUP_STEPS
 
-        # campiona t ~ Uniform(0,1) per ogni esempio del batch
         t = torch.rand(B, device=device)
-
-        # forward diffusion: maschera i token
         x_t, masked = mask_tokens(input_ids, t, attention_mask)
 
-
-        # forward modello con AMP (float16 su GPU dove possibile)
         with autocast('cuda', enabled=(device.type == 'cuda')):
             logits = model(x_t, t)
             loss = compute_loss(logits, input_ids, masked)
- 
-        # backward con scaler (evita underflow in float16)
-        optimizer.zero_grad(set_to_none=True)  # più veloce di zero_grad()
 
+        optimizer.zero_grad(set_to_none=True)
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -245,7 +251,6 @@ def train():
         step += 1
         running_loss += loss.item()
 
-        # log
         if step % config.LOG_EVERY == 0:
             elapsed = time.time() - t0
             sec_per_step = elapsed / (step - start_step)
@@ -253,14 +258,9 @@ def train():
             print(f"[{step}/{config.TOTAL_STEPS}] loss={running_loss / config.LOG_EVERY:.4f} | {sec_per_step:.2f}s/step | ETA {eta_h:.1f}h")
             running_loss = 0.0
 
-        # validazione
-        if step % config.EVAL_EVERY == 0:
-            val_loss = evaluate(model, val_dl)
-            print(f"[{step}] VAL loss={val_loss:.4f}")
-            model.train()
-
-        # checkpoint
-        if step % config.SAVE_EVERY == 0 or step == config.TOTAL_STEPS:
+        if (step <= 4000 and step % 400 == 0) or \
+           (step > 4000 and step % 4000 == 0) or \
+           step == config.TOTAL_STEPS:
             path = os.path.join(config.OUTPUT_DIR, f"ckpt_step{step:06d}.pt")
             torch.save({"step": step, "model": model.state_dict(), "loss": loss.item()}, path)
             print(f"[{step}] Checkpoint salvato: {path}")

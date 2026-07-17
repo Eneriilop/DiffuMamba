@@ -18,9 +18,9 @@ import csv
 import numpy as np
 from scipy.stats import spearmanr
 
-OUTPUT_BASE_DIR  = "probing_results"
-LEARNING_CURVE   = os.path.join(OUTPUT_BASE_DIR, "learning_curve.csv")
-ALL_METRICS      = os.path.join(OUTPUT_BASE_DIR, "all_metrics.csv")
+OUTPUT_BASE_DIR  = "probing_results_mamba_sent"
+LEARNING_CURVE   = os.path.join(OUTPUT_BASE_DIR, "learning_curve_mamba_sent.csv")
+ALL_METRICS      = os.path.join(OUTPUT_BASE_DIR, "all_metrics_mamba_sent.csv")
 
 
 def evaluate_checkpoint(ckpt_dir):

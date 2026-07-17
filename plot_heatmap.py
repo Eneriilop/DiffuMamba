@@ -6,13 +6,13 @@ import pandas as pd
 import numpy as np
 
 # ── Configurazione ────────────────────────────────────────────────────────────
-CSV_PATH = 'all_metrics.csv'     
+CSV_PATH = 'run_mamba_sentences/all_metrics_mamba_sent.csv'     
 dir = 'C:/Users/irene/Desktop/DiffuMamba/'      
-OUTPUT   = 'heatmap_probing.png'
+OUTPUT   = 'run_mamba_sentences/heatmap_probing.png'
 
 # Checkpoint da mostrare come colonne
-SELECTED_STEPS = [25000, 50000, 100000, 200000, 375000, 624000]
-COL_LABELS     = ['25k', '50k', '100k', '200k', '375k', '624k']
+SELECTED_STEPS = [400, 4000, 40000, 80000, 116000, 117188]
+COL_LABELS     = ['400', '4k', '40k', '80k', '116k', '117k']
 
 # ── Caricamento dati ──────────────────────────────────────────────────────────
 df = pd.read_csv(CSV_PATH)
@@ -43,7 +43,7 @@ CAT_COLORS = {
 }
 
 # Ordina: per categoria, poi per ρ finale decrescente
-rho_final = df_sel.loc[624000]
+rho_final = df_sel.loc[117188]
 #per ordinamento per categorie di feature e poi ordine di p
 #sort_key  = [(CAT_ORDER.index(categorize(f)), -rho_final[f]) for f in features]
 order     = sorted(range(len(features)), key=lambda i: [features[i]])
@@ -128,7 +128,7 @@ cbar = fig.colorbar(im, ax=ax, shrink=0.4, pad=0.01, aspect=20)
 cbar.set_label('Spearman ρ', fontsize=9)
 cbar.ax.tick_params(labelsize=8)
 
-ax.set_title('Probing linguistico — DiffuMamba (Run 2)',
+ax.set_title('Probing linguistico — DiffuMamba (Run 3)',
              fontsize=12, fontweight='bold', color='#1B3A6B', pad=14)
 
 for spine in ax.spines.values():

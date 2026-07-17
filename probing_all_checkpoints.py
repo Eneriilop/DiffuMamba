@@ -34,10 +34,10 @@ import config
 
 # ── Configurazione ───────────────────────────────────────────────────────────
 
-CHECKPOINTS_DIR = "checkpoints_3ep"
+CHECKPOINTS_DIR = "checkpoints_mamba_sentences"  # cartella con i checkpoint da valutare
 TRAIN_TSV       = "data/train_probe.tsv"
 TEST_TSV        = "data/test_probe.tsv"
-OUTPUT_BASE_DIR = "probing_results"
+OUTPUT_BASE_DIR = "probing_results_mamba_sent"
 BATCH_SIZE      = 64
 DEVICE          = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
