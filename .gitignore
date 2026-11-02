@@ -1,0 +1,21 @@
+# Ambiente Python
+/env/
+__pycache__/
+*.pyc
+
+# Dati, modelli e log
+/data/
+/checkpoints/
+/logs/
+
+# Eventuali checkpoint altrove
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# File locali
+.env
+
+# Risultati intermedi del probing
+/probing_results/**/*.tsv
