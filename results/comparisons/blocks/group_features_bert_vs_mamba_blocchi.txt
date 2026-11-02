@@ -1,0 +1,29 @@
+Confronto: BERT vs DiffuMamba — blocchi
+
+[USATE] Feature del paper condivise da tutte le run: 62
+  RawText (2): char_per_tok, n_tokens
+  Vocabulary (0): —
+  POS (16): lexical_density, upos_dist_ADJ, upos_dist_ADP, upos_dist_ADV, upos_dist_CCONJ, upos_dist_DET, upos_dist_NOUN, upos_dist_NUM, upos_dist_PRON, upos_dist_PROPN, upos_dist_PUNCT, upos_dist_SCONJ, upos_dist_VERB, xpos_dist_FB, xpos_dist_FF, xpos_dist_VA
+  VerbInflection (14): verbs_mood+tense_dist_Ind_PassPross, verbs_mood+tense_dist_Ind_Pres, verbs_mood+tense_dist_Inf_Pres, verbs_mood+tense_dist_Part_Past, verbs_mood_dist_Ind, verbs_mood_dist_Inf, verbs_mood_dist_Part, verbs_num_pers_dist_Plur+3, verbs_num_pers_dist_Sing+3, verbs_tense_dist_PassPross, verbs_tense_dist_Past, verbs_tense_dist_Pres, verbs_voice_dist_Active, verbs_voice_dist_Passive
+  VerbPredicate (5): avg_verb_edges, verb_edges_dist_1, verb_edges_dist_2, verb_edges_dist_3, verb_edges_dist_4
+  TreeStructure (4): avg_links_len, avg_prepositional_chain_len, avg_token_per_clause, max_links_len
+  Order (2): obj_post, subj_pre
+  SyntacticDep (15): dep_dist_acl, dep_dist_acl:relcl, dep_dist_advcl, dep_dist_advmod, dep_dist_amod, dep_dist_case, dep_dist_conj, dep_dist_cop, dep_dist_flat:name, dep_dist_mark, dep_dist_nmod, dep_dist_nsubj, dep_dist_nummod, dep_dist_obj, dep_dist_obl
+  Subord (4): avg_subordinate_chain_len, principal_proposition_dist, subordinate_post, subordinate_proposition_dist
+
+[ESCLUSE] Feature non presenti nel paper: 2
+  n_prepositional_chains   (in: DiffuMamba — blocchi (Run 5, 512 tok), BERT medium — blocchi (512 tok))
+  subj_post   (in: DiffuMamba — blocchi (Run 5, 512 tok), BERT medium — blocchi (512 tok))
+
+[ESCLUSE] Feature del paper non condivise tra le run: 0
+  —
+
+[ASSENTI] Feature del paper assenti in tutti i CSV: 8
+  ttr_form [Vocabulary]
+  ttr_lemma [Vocabulary]
+  aux_* [VerbInflection]
+  verbal_head_dist [VerbPredicate]
+  verbal_root_perc [VerbPredicate]
+  parse_depth [TreeStructure]
+  prep_dist_* [TreeStructure]
+  subordinate_dist_1 [Subord]

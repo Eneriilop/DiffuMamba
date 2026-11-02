@@ -1,0 +1,17 @@
+Run,Gruppo,85%,90%,95%,peak_rho
+BERT medium — frasi,RawText,400,1600,3200,0.9083
+BERT medium — frasi,POS,2400,8000,12000,0.7942
+BERT medium — frasi,VerbInflection,8000,12000,20000,0.6657
+BERT medium — frasi,VerbPredicate,8000,12000,24000,0.4362
+BERT medium — frasi,TreeStructure,400,400,3200,0.8266
+BERT medium — frasi,Order,12000,16000,28000,0.7604
+BERT medium — frasi,SyntacticDep,8000,12000,20000,0.6878
+BERT medium — frasi,Subord,2000,8000,16000,0.805
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",RawText,800,1200,2800,0.8704
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",POS,1200,2000,3600,0.7952
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",VerbInflection,2400,8000,12000,0.6777
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",VerbPredicate,2000,2800,12000,0.4372
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",TreeStructure,400,800,1600,0.8274
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",Order,2000,3600,12000,0.7676
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",SyntacticDep,1600,2400,8000,0.6956
+"DiffuMamba — frasi + LN (Run 4, 128 tok)",Subord,1200,2000,8000,0.8054
