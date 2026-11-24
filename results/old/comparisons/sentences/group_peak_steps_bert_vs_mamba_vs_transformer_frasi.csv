@@ -1,0 +1,25 @@
+Run,Gruppo,85%,90%,95%,peak_rho
+BERT medium — frasi,RawText,400,1600,3200,0.9083
+BERT medium — frasi,POS,2400,8000,12000,0.7942
+BERT medium — frasi,VerbInflection,8000,12000,20000,0.6657
+BERT medium — frasi,VerbPredicate,8000,12000,24000,0.4362
+BERT medium — frasi,TreeStructure,400,400,3200,0.8266
+BERT medium — frasi,Order,12000,16000,28000,0.7604
+BERT medium — frasi,SyntacticDep,8000,12000,20000,0.6878
+BERT medium — frasi,Subord,2000,8000,16000,0.805
+DiffuMamba — frasi (128 tok),RawText,800,1200,2800,0.8704
+DiffuMamba — frasi (128 tok),POS,1200,2000,3600,0.7952
+DiffuMamba — frasi (128 tok),VerbInflection,2400,8000,12000,0.6777
+DiffuMamba — frasi (128 tok),VerbPredicate,2000,2800,12000,0.4372
+DiffuMamba — frasi (128 tok),TreeStructure,400,800,1600,0.8274
+DiffuMamba — frasi (128 tok),Order,2000,3600,12000,0.7676
+DiffuMamba — frasi (128 tok),SyntacticDep,1600,2400,8000,0.6956
+DiffuMamba — frasi (128 tok),Subord,1200,2000,8000,0.8054
+DiffuTransformer — frasi (128 tok),RawText,1200,1600,3200,0.8896
+DiffuTransformer — frasi (128 tok),POS,2000,2800,8000,0.7828
+DiffuTransformer — frasi (128 tok),VerbInflection,3600,8000,20000,0.6709
+DiffuTransformer — frasi (128 tok),VerbPredicate,2000,3200,12000,0.439
+DiffuTransformer — frasi (128 tok),TreeStructure,0,800,2000,0.8333
+DiffuTransformer — frasi (128 tok),Order,8000,12000,28000,0.7556
+DiffuTransformer — frasi (128 tok),SyntacticDep,2400,8000,16000,0.6796
+DiffuTransformer — frasi (128 tok),Subord,1200,2400,8000,0.8034

@@ -1,0 +1,25 @@
+Run,Gruppo,85%,90%,95%,peak_rho
+DiffuMamba — blocchi (512 tok),RawText,800,1200,2400,0.8852
+DiffuMamba — blocchi (512 tok),POS,1200,1600,2800,0.7958
+DiffuMamba — blocchi (512 tok),VerbInflection,2000,3600,12000,0.666
+DiffuMamba — blocchi (512 tok),VerbPredicate,1600,2400,8000,0.4213
+DiffuMamba — blocchi (512 tok),TreeStructure,0,800,1200,0.8186
+DiffuMamba — blocchi (512 tok),Order,1600,3600,16000,0.7351
+DiffuMamba — blocchi (512 tok),SyntacticDep,1600,2000,8000,0.6866
+DiffuMamba — blocchi (512 tok),Subord,800,1600,8000,0.7866
+DiffuTransformer — blocchi (512 tok),RawText,8000,8000,12000,0.8936
+DiffuTransformer — blocchi (512 tok),POS,8000,12000,20000,0.7814
+DiffuTransformer — blocchi (512 tok),VerbInflection,8000,12000,24000,0.6543
+DiffuTransformer — blocchi (512 tok),VerbPredicate,8000,12000,24000,0.4178
+DiffuTransformer — blocchi (512 tok),TreeStructure,0,2000,12000,0.8278
+DiffuTransformer — blocchi (512 tok),Order,12000,16000,28000,0.7181
+DiffuTransformer — blocchi (512 tok),SyntacticDep,8000,16000,24000,0.6662
+DiffuTransformer — blocchi (512 tok),Subord,2000,12000,24000,0.7865
+Mamba AR — blocchi (512 tok),RawText,800,800,1600,0.8918
+Mamba AR — blocchi (512 tok),POS,800,1200,2000,0.8019
+Mamba AR — blocchi (512 tok),VerbInflection,1600,2400,8000,0.6645
+Mamba AR — blocchi (512 tok),VerbPredicate,1200,2400,8000,0.4255
+Mamba AR — blocchi (512 tok),TreeStructure,0,400,1200,0.8197
+Mamba AR — blocchi (512 tok),Order,1200,2000,8000,0.7256
+Mamba AR — blocchi (512 tok),SyntacticDep,1200,1200,3200,0.6864
+Mamba AR — blocchi (512 tok),Subord,800,1200,2800,0.787

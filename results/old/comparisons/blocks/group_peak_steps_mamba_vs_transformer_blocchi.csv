@@ -1,0 +1,17 @@
+Run,Gruppo,85%,90%,95%,peak_rho
+DiffuMamba — blocchi (512 tok),RawText,800,1200,2000,0.8827
+DiffuMamba — blocchi (512 tok),POS,1200,1600,2400,0.7918
+DiffuMamba — blocchi (512 tok),VerbInflection,2400,3600,8000,0.6709
+DiffuMamba — blocchi (512 tok),VerbPredicate,2000,4000,8000,0.4398
+DiffuMamba — blocchi (512 tok),TreeStructure,400,800,1600,0.8265
+DiffuMamba — blocchi (512 tok),Order,1600,3200,8000,0.7518
+DiffuMamba — blocchi (512 tok),SyntacticDep,1600,2000,8000,0.6884
+DiffuMamba — blocchi (512 tok),Subord,1200,1600,8000,0.7962
+DiffuTransformer — blocchi (512 tok),RawText,8000,8000,12000,0.8915
+DiffuTransformer — blocchi (512 tok),POS,8000,12000,20000,0.7801
+DiffuTransformer — blocchi (512 tok),VerbInflection,8000,12000,24000,0.6566
+DiffuTransformer — blocchi (512 tok),VerbPredicate,8000,12000,24000,0.4197
+DiffuTransformer — blocchi (512 tok),TreeStructure,0,800,8000,0.8244
+DiffuTransformer — blocchi (512 tok),Order,12000,16000,24000,0.713
+DiffuTransformer — blocchi (512 tok),SyntacticDep,8000,16000,24000,0.6659
+DiffuTransformer — blocchi (512 tok),Subord,1200,8000,20000,0.7856

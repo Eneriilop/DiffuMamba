@@ -1,0 +1,17 @@
+Run,Gruppo,85%,90%,95%,peak_rho
+DiffuMamba — frasi (128 tok),RawText,800,1200,2800,0.8737
+DiffuMamba — frasi (128 tok),POS,1200,1600,2800,0.7894
+DiffuMamba — frasi (128 tok),VerbInflection,2800,8000,12000,0.6808
+DiffuMamba — frasi (128 tok),VerbPredicate,2000,3200,12000,0.4421
+DiffuMamba — frasi (128 tok),TreeStructure,400,800,1600,0.8239
+DiffuMamba — frasi (128 tok),Order,2400,8000,16000,0.7642
+DiffuMamba — frasi (128 tok),SyntacticDep,1600,2400,8000,0.6885
+DiffuMamba — frasi (128 tok),Subord,1200,2400,8000,0.8031
+Mamba AR — frasi (128 tok),RawText,400,800,1600,0.8792
+Mamba AR — frasi (128 tok),POS,800,1200,1600,0.7984
+Mamba AR — frasi (128 tok),VerbInflection,1600,2800,8000,0.6646
+Mamba AR — frasi (128 tok),VerbPredicate,1200,2000,4000,0.4264
+Mamba AR — frasi (128 tok),TreeStructure,0,400,800,0.8114
+Mamba AR — frasi (128 tok),Order,1200,2000,8000,0.7468
+Mamba AR — frasi (128 tok),SyntacticDep,800,1200,2800,0.6866
+Mamba AR — frasi (128 tok),Subord,400,800,2400,0.7762

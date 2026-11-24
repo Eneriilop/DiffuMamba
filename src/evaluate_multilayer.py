@@ -1,18 +1,26 @@
 """
 evaluate_multilayer.py — Calcola Spearman ρ per layer e checkpoint
+
+Uso (dalla cartella src), stessi argomenti di probing_multilayer.py:
+    python evaluate_multilayer.py --model mamba --data sent --seed 0 [--no-ln]
 """
 
-import os, re, csv
+import os, re, csv, argparse
 import numpy as np
 from scipy.stats import spearmanr
+from runs import probing_dir, learning_curve_csv, all_metrics_csv
 
-RUN             = "run5"
-APPLY_LN        = True    # deve coincidere con probing_multilayer.py
-SUFFIX          = "_ln" if APPLY_LN else ""
+parser = argparse.ArgumentParser()
+parser.add_argument("--model", choices=["mamba", "transformer", "ar"], required=True)
+parser.add_argument("--data", choices=["sent", "blocks"], required=True)
+parser.add_argument("--seed", type=int, required=True)
+parser.add_argument("--no-ln", action="store_true", help="risultati del probing senza LayerNorm")
+args = parser.parse_args()
+LN = not args.no_ln
 
-OUTPUT_BASE_DIR = f"../probing_results/{RUN}{SUFFIX}"
-OUT_CURVE       = f"../results/learning_curve_{RUN}{SUFFIX}.csv"   # avg ρ per step × layer
-OUT_ALL         = f"../results/all_metrics_{RUN}{SUFFIX}.csv"       # ρ per feature × layer × step
+OUTPUT_BASE_DIR = probing_dir(args.model, args.data, args.seed, ln=LN)
+OUT_CURVE       = learning_curve_csv(args.model, args.data, args.seed, ln=LN)   # avg ρ per step × layer
+OUT_ALL         = all_metrics_csv(args.model, args.data, args.seed, ln=LN)      # ρ per feature × layer × step
 
 
 def evaluate_layer(layer_dir):
@@ -37,7 +45,8 @@ def evaluate_layer(layer_dir):
 ckpt_dirs = []
 for dname in os.listdir(OUTPUT_BASE_DIR):
     m = re.match(r"checkpoint_(\d+)", dname)
-    if m:
+    # solo checkpoint completati (file DONE scritto da probing_multilayer.py)
+    if m and os.path.exists(os.path.join(OUTPUT_BASE_DIR, dname, "DONE")):
         ckpt_dirs.append((int(m.group(1)), os.path.join(OUTPUT_BASE_DIR, dname)))
 ckpt_dirs.sort(key=lambda x: x[0])
 print(f"Checkpoint trovati: {len(ckpt_dirs)}")

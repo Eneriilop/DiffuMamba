@@ -16,9 +16,9 @@ EXPAND      = 2
 CONV_KERNEL = 4
 
 # --- Dati ---
-DATA_PATH   = "data/blocks_512"   # cartella Arrow dataset HuggingFace
+DATA_PATH   = "../data/blocks_512"   # cartella Arrow dataset HuggingFace
 DATA_FORMAT = "blocks_pretok"     # blocchi pre-tokenizzati
-VAL_PATH   = "data/eval_blocks_512"
+VAL_PATH   = "../data/eval_blocks_512"
 VAL_FORMAT = "blocks_pretok"
 
 # --- Training ---
@@ -29,5 +29,5 @@ WARMUP_STEPS = 1_000
 LR           = 1e-4
 
 # --- Checkpoint ---
-OUTPUT_DIR = "../checkpoints/run5"
+# OUTPUT_DIR: deciso da runs.py (checkpoints/<data>[_<model>]_seed<N>)
 LOG_EVERY  = 50

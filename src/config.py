@@ -19,9 +19,9 @@ CONV_KERNEL = 4       # kernel conv 1D interna Mamba (default libreria)
 #   "csv"       → un file csv con colonna "text" che contiene le frasi
 #   "sentences" → un file con una frase per riga
 #   "blocks"    → un file con blocchi di frasi separati da riga vuota
-DATA_PATH   = "data/train_shuffled.csv"
+DATA_PATH   = "../data/train_shuffled.csv"
 DATA_FORMAT = "csv"          # "csv" | "sentences" | "blocks"
-VAL_PATH = "data/eval_3.csv"
+VAL_PATH = "../data/eval_3.csv"
 VAL_FORMAT = "csv"
 
 # --- Training ---
@@ -34,7 +34,7 @@ MASK_RATE    = 0.15   # probabilità base di mascherare un token (come BERT)
                       # nel diffusion viene campionato t e usato come rate variabile
 
 # --- Checkpoint ---
-OUTPUT_DIR   = "../checkpoints/run4"
+# OUTPUT_DIR: deciso da runs.py (checkpoints/<data>[_<model>]_seed<N>)
 # SAVE_EVERY   = 25_000   #salva checkpoint ogni N step (incluso ultimo)
 LOG_EVERY    = 50
 # EVAL_EVERY   = 10_000

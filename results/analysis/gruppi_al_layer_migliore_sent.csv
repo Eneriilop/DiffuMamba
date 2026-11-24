@@ -1,0 +1,37 @@
+modello,gruppo,layer,media,std,diff_vs_DiffuMamba,std_combinata,diff_su_std
+DiffuMamba,RawText,4,0.8737,0.0027,0.0,0.0027,0.0
+DiffuMamba,POS,4,0.7876,0.0005,0.0,0.0005,0.0
+DiffuMamba,VerbInflection,4,0.6806,0.0022,0.0,0.0022,0.0
+DiffuMamba,VerbPredicate,4,0.4338,0.0037,0.0,0.0037,0.0
+DiffuMamba,TreeStructure,4,0.8222,0.0024,0.0,0.0024,0.0
+DiffuMamba,Order,4,0.7629,0.0037,0.0,0.0037,0.0
+DiffuMamba,SyntacticDep,4,0.6873,0.0018,0.0,0.0018,0.0
+DiffuMamba,Subord,4,0.7989,0.0055,0.0,0.0055,0.0
+DiffuMamba,ALL,4,0.7156,0.001,0.0,0.001,0.0
+DiffuTransformer,RawText,2,0.8859,0.005,0.0122,0.004,3.057
+DiffuTransformer,POS,2,0.7863,0.0039,-0.0013,0.0028,-0.4627
+DiffuTransformer,VerbInflection,2,0.6716,0.0056,-0.009,0.0043,-2.1207
+DiffuTransformer,VerbPredicate,2,0.4374,0.006,0.0036,0.005,0.7195
+DiffuTransformer,TreeStructure,2,0.8314,0.0015,0.0091,0.002,4.5574
+DiffuTransformer,Order,2,0.7546,0.0042,-0.0083,0.0039,-2.127
+DiffuTransformer,SyntacticDep,2,0.6825,0.0031,-0.0048,0.0025,-1.8929
+DiffuTransformer,Subord,2,0.8064,0.0027,0.0075,0.0043,1.7209
+DiffuTransformer,ALL,2,0.7135,0.0023,-0.0021,0.0017,-1.1777
+Mamba AR,RawText,3,0.8755,0.0036,0.0018,0.0032,0.5816
+Mamba AR,POS,3,0.7971,0.0021,0.0094,0.0015,6.2005
+Mamba AR,VerbInflection,3,0.6637,0.0018,-0.0169,0.002,-8.5136
+Mamba AR,VerbPredicate,3,0.4222,0.0028,-0.0116,0.0033,-3.5521
+Mamba AR,TreeStructure,3,0.8093,0.0033,-0.0129,0.0029,-4.4702
+Mamba AR,Order,3,0.7454,0.0028,-0.0175,0.0033,-5.346
+Mamba AR,SyntacticDep,3,0.6862,0.0012,-0.0011,0.0015,-0.7103
+Mamba AR,Subord,3,0.7738,0.002,-0.0251,0.0041,-6.0566
+Mamba AR,ALL,3,0.7101,0.0011,-0.0055,0.001,-5.3082
+BERT,RawText,3,0.8865,0.0032,0.0129,0.0029,4.3637
+BERT,POS,3,0.7998,0.0019,0.0122,0.0014,8.7568
+BERT,VerbInflection,3,0.6732,0.0033,-0.0074,0.0028,-2.6303
+BERT,VerbPredicate,3,0.4338,0.0038,-0.0,0.0037,-0.0089
+BERT,TreeStructure,3,0.8296,0.0029,0.0074,0.0027,2.7472
+BERT,Order,3,0.7637,0.0042,0.0007,0.004,0.1847
+BERT,SyntacticDep,3,0.6948,0.0019,0.0074,0.0018,4.0232
+BERT,Subord,3,0.8074,0.0013,0.0085,0.004,2.1138
+BERT,ALL,3,0.7203,0.0012,0.0047,0.0011,4.273

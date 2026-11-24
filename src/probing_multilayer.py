@@ -1,29 +1,61 @@
 """
 probing_multilayer.py — Probing su tutti i layer per ogni checkpoint
 
-APPLY_LN = True applica una LayerNorm all'output di ogni
-blocco prima del mean pooling, come gli hidden_states post-LN di BERT.
-Il residual stream che passa al blocco successivo resta invariato.
-I risultati vanno in una cartella separata che termina con "_ln".
+Uso (dalla cartella src):
+    python probing_multilayer.py --model mamba --data sent --seed 0             → probing_results/sent_seed0
+    python probing_multilayer.py --model mamba --data sent --seed 0 --no-ln     → probing_results/sent_seed0_noln
+    python probing_multilayer.py --model transformer --data blocks --seed 1     → probing_results/blocks_transformer_seed1
+
+Di default applica una LayerNorm all'output di ogni blocco prima del mean
+pooling, come gli hidden_states post-LN di BERT (il residual stream che passa
+al blocco successivo resta invariato). --no-ln estrae gli hidden state grezzi.
+
+Per DiffuTransformer l'input include il positional embedding e i layer
+ricevono l'attention mask, esattamente come in training.
+Per Mamba AR (--model ar) non c'è timestep: il modello è causale e il
+padding a destra non influenza i token reali.
+
+Il probe (MinMaxScaler + Ridge) è deterministico: non usa seed. Il seed
+indica solo quale modello addestrato leggere.
+
+Un checkpoint già completato (file DONE nella sua cartella) viene saltato,
+quindi lo script si può rilanciare dopo un'interruzione.
 """
 
-import os, re, csv, torch
+import os, re, csv, argparse, torch
 import torch.nn.functional as F
 import numpy as np
 from transformers import AutoTokenizer
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import MinMaxScaler
-from model import DiffuMamba
-import config
+from runs import get_config, checkpoints_dir, probing_dir
 
-RUN             = "run5"
-APPLY_LN        = True
-SUFFIX          = "_ln" if APPLY_LN else ""
+parser = argparse.ArgumentParser()
+parser.add_argument("--model", choices=["mamba", "transformer", "ar"], required=True)
+parser.add_argument("--data", choices=["sent", "blocks"], required=True)
+parser.add_argument("--seed", type=int, required=True)
+parser.add_argument("--no-ln", action="store_true", help="niente LayerNorm sugli hidden state")
+args = parser.parse_args()
 
-CHECKPOINTS_DIR = f"../checkpoints/{RUN}"
+MODEL    = args.model
+APPLY_LN = not args.no_ln
+
+config = get_config(MODEL, args.data)
+if MODEL == "mamba":
+    from model import DiffuMamba
+elif MODEL == "ar":
+    from model import MambaAR
+else:
+    from model_transformer import DiffuTransformer
+
+# Troncatura delle frasi di probing, uguale per tutti i modelli (anche per
+# quelli addestrati su blocchi da 512): stesse frasi, stesso taglio.
+PROBE_MAX_LEN   = 128
+
+CHECKPOINTS_DIR = checkpoints_dir(MODEL, args.data, args.seed)
+OUTPUT_BASE_DIR = probing_dir(MODEL, args.data, args.seed, ln=APPLY_LN)
 TRAIN_TSV       = "../data/train_probe.tsv"
 TEST_TSV        = "../data/test_probe.tsv"
-OUTPUT_BASE_DIR = f"../probing_results/{RUN}{SUFFIX}"
 BATCH_SIZE      = 64
 DEVICE          = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -50,7 +82,7 @@ def encode_all_layers(model, tokenizer, texts):
     for i in range(0, len(texts), BATCH_SIZE):
         batch_texts = texts[i : i + BATCH_SIZE]
         enc = tokenizer(batch_texts, truncation=True,
-                        max_length=config.MAX_SEQ_LEN,
+                        max_length=PROBE_MAX_LEN,
                         padding="max_length", return_tensors="pt")
         input_ids      = enc["input_ids"].to(DEVICE)
         attention_mask = enc["attention_mask"].to(DEVICE)
@@ -58,13 +90,21 @@ def encode_all_layers(model, tokenizer, texts):
         t = torch.zeros(B, device=DEVICE)
 
         with torch.no_grad():
-            x = model.token_emb(input_ids)
-            t_vec = model.time_emb(t.unsqueeze(1))
-            x = x + t_vec.unsqueeze(1)
+            if MODEL == "transformer":
+                x = model.embed(input_ids, t)   # token + posizione + timestep
+            elif MODEL == "ar":
+                x = model.token_emb(input_ids)  # Mamba AR: nessun timestep
+            else:
+                x = model.token_emb(input_ids)
+                t_vec = model.time_emb(t.unsqueeze(1))
+                x = x + t_vec.unsqueeze(1)
             mask = attention_mask.unsqueeze(-1).float()
 
             for layer_idx, layer in enumerate(model.layers):
-                x = layer(x)
+                if MODEL == "transformer":
+                    x = layer(x, attention_mask)   # esclude il padding dall'attenzione
+                else:
+                    x = layer(x)
                 h = F.layer_norm(x, x.shape[-1:]) if APPLY_LN else x  # solo per il probing
                 rep = (h * mask).sum(dim=1) / mask.sum(dim=1)  # mean pooling
                 all_reps[layer_idx].append(rep.cpu().numpy())
@@ -74,7 +114,13 @@ def encode_all_layers(model, tokenizer, texts):
 
 def run_probing_multilayer(ckpt_path, train_texts, test_texts,
                            feature_names, Y_train, Y_test, ckpt_out_dir):
-    model = DiffuMamba().to(DEVICE)
+    if MODEL == "transformer":
+        model = DiffuTransformer(config)
+    elif MODEL == "ar":
+        model = MambaAR(config)
+    else:
+        model = DiffuMamba()
+    model = model.to(DEVICE)
     ckpt  = torch.load(ckpt_path, map_location=DEVICE)
     model.load_state_dict(ckpt["model"])
     model.eval()
@@ -104,12 +150,16 @@ def run_probing_multilayer(ckpt_path, train_texts, test_texts,
                 for pred, true in zip(y_pred, Y_test[:, i]):
                     writer.writerow([pred, true])
 
+    # segna il checkpoint come completo (tutti i layer e tutte le feature scritti)
+    open(os.path.join(ckpt_out_dir, "DONE"), "w").close()
+
     del model
     torch.cuda.empty_cache()
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
-print(f"Run: {RUN} | LayerNorm sui layer: {APPLY_LN} | Output: {OUTPUT_BASE_DIR}")
+print(f"Modello: {MODEL} | dati: {args.data} | seed: {args.seed} | LayerNorm sui layer: {APPLY_LN}")
+print(f"Checkpoint: {CHECKPOINTS_DIR} | Output: {OUTPUT_BASE_DIR}")
 print("Caricamento dataset probing...")
 train_texts, feature_names, Y_train = load_tsv(TRAIN_TSV)
 test_texts,  _,             Y_test  = load_tsv(TEST_TSV)
@@ -125,7 +175,7 @@ print(f"Checkpoint trovati: {len(ckpt_files)}")
 
 for step, ckpt_path in ckpt_files:
     ckpt_out_dir = os.path.join(OUTPUT_BASE_DIR, f"checkpoint_{step:06d}")
-    if os.path.exists(ckpt_out_dir) and len(os.listdir(ckpt_out_dir)) == config.NUM_LAYERS:
+    if os.path.exists(os.path.join(ckpt_out_dir, "DONE")):
         print(f"[step {step:,}] già calcolato, skip.")
         continue
     print(f"\n[step {step:,}] Probing multilayer in corso...")

@@ -1,98 +1,189 @@
 # ============================================================
-# plot_comparison.py — Confronto multilayer tra run diverse
+# plot_comparison.py — Confronto multilayer tra modelli
+#
+# Per ogni modello legge l'ultimo checkpoint di ciascun seed e
+# disegna la ρ media per layer (media sui seed) con una banda di
+# ±1 deviazione standard (BERT: 3 seed, 42/43/44, forniti da terzi).
 #
 # Uso:
-#   Lo script legge l'ultimo checkpoint di ciascuna run e
-#   plotta ρ per layer, una linea per run.
 #   python plot_comparison.py              → tutti i confronti
 #   python plot_comparison.py <name> ...   → solo i confronti indicati
 # ============================================================
 
 import os
 import sys
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+from seeds import SEEDS
+from runs import learning_curve_csv, bert_csvs
 
 # ============================================================
 # CONFIGURAZIONE
 # ============================================================
+# Convenzione: "DiffuMamba" e "DiffuTransformer" = probing con LayerNorm sugli
+# hidden states, per un confronto corretto con gli hidden_states post-LN di
+# BERT. La versione senza LN compare solo nel confronto con/senza LN.
 
-MAMBA_FRASI = {
-    "label":    "Run 4 — frasi (128 tok)",
-    "csv":      "../results/learning_curve_run4.csv",       # path al CSV
+
+def seed_csvs(model, data, ln=True):
+    """CSV learning_curve di tutti i seed di un modello."""
+    return [learning_curve_csv(model, data, s, ln=ln) for s in SEEDS]
+
+
+MAMBA_FRASI_NOLN = {
+    "label":    "DiffuMamba senza LN — frasi (128 tok)",
+    "csvs":     seed_csvs("mamba", "sent", ln=False),
     "color":    "#2196F3",
     "linestyle": "-",
 }
-MAMBA_FRASI_LN = {
-    "label":    "Run 4 — frasi + LN (128 tok)",
-    "csv":      "../results/learning_curve_run4_ln.csv",    # LayerNorm sugli hidden states
+MAMBA_FRASI = {
+    "label":    "DiffuMamba — frasi (128 tok)",
+    "csvs":     seed_csvs("mamba", "sent"),
     "color":    "#3F51B5",
     "linestyle": ":",
 }
+MAMBA_FRASI_CON_LN = {**MAMBA_FRASI, "label": "DiffuMamba con LN — frasi (128 tok)"}
+TRANSFORMER_FRASI = {
+    "label":    "DiffuTransformer — frasi (128 tok)",
+    "csvs":     seed_csvs("transformer", "sent"),
+    "color":    "#9C27B0",
+    "linestyle": "--",
+}
+AR_FRASI = {
+    "label":    "Mamba AR — frasi (128 tok)",
+    "csvs":     seed_csvs("ar", "sent"),
+    "color":    "#00897B",
+    "linestyle": "-",
+}
 BERT_FRASI = {
     "label":     "BERT — frasi",
-    "csv":       "../results/learning_curve_bert_frasi.csv",
+    "csvs":      bert_csvs("sent"),        # formato lungo, un file per seed
     "color":     "#4CAF50",
     "linestyle": "-.",
 }
-MAMBA_BLOCCHI = {
-    "label":    "Run 5 — blocchi (512 tok)",
-    "csv":      "../results/learning_curve_run5.csv",
+MAMBA_BLOCCHI_NOLN = {
+    "label":    "DiffuMamba senza LN — blocchi (512 tok)",
+    "csvs":     seed_csvs("mamba", "blocks", ln=False),
     "color":    "#FF5722",
     "linestyle": "-",
 }
-MAMBA_BLOCCHI_LN = {
-    "label":    "Run 5 — blocchi + LN (512 tok)",
-    "csv":      "../results/learning_curve_run5_ln.csv",    # LayerNorm sugli hidden states
+MAMBA_BLOCCHI = {
+    "label":    "DiffuMamba — blocchi (512 tok)",
+    "csvs":     seed_csvs("mamba", "blocks"),
     "color":    "#BF360C",
     "linestyle": ":",
 }
+MAMBA_BLOCCHI_CON_LN = {**MAMBA_BLOCCHI, "label": "DiffuMamba con LN — blocchi (512 tok)"}
+TRANSFORMER_BLOCCHI = {
+    "label":    "DiffuTransformer — blocchi (512 tok)",
+    "csvs":     seed_csvs("transformer", "blocks"),
+    "color":    "#6A1B9A",
+    "linestyle": "--",
+}
+AR_BLOCCHI = {
+    "label":    "Mamba AR — blocchi (512 tok)",
+    "csvs":     seed_csvs("ar", "blocks"),
+    "color":    "#004D40",
+    "linestyle": "-",
+}
 BERT_BLOCCHI = {
     "label":     "BERT — blocchi (512 tok)",
-    "csv":       "../results/bert_medium_dbmdz_blocks_512_probing.csv",   # formato lungo
+    "csvs":      bert_csvs("blocks"),      # formato lungo, un file per seed
     "color":     "#2E7D32",
     "linestyle": "-.",
 }
+
+OUT_SENT   = "../results/comparisons/sentences/per_layer"
+OUT_BLOCKS = "../results/comparisons/blocks/per_layer"
 
 COMPARISONS = [
     # --- frasi ---
     {
         "name":   "bert_mamba",
         "runs":   [MAMBA_FRASI, BERT_FRASI],
-        "output": "../results/comparisons/sentences/comparison_bert_mamba_sentences.pdf",
-        "title":  "Confronto probing multilayer — DiffuMamba vs BERT",
-    },
-    {
-        "name":   "bert_mamba_ln",
-        "runs":   [MAMBA_FRASI_LN, BERT_FRASI],
-        "output": "../results/comparisons/sentences/comparison_bert_mamba_ln_sentences.pdf",
-        "title":  "Confronto probing multilayer — DiffuMamba + LN vs BERT",
+        "output": f"{OUT_SENT}/comparison_bert_mamba_sentences.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs BERT (frasi)",
     },
     {
         "name":   "bert_mamba_ln_vs_noln",
-        "runs":   [MAMBA_FRASI, MAMBA_FRASI_LN, BERT_FRASI],
-        "output": "../results/comparisons/sentences/comparison_bert_mamba_ln_vs_noln_sentences.pdf",
-        "title":  "Confronto probing multilayer — DiffuMamba con/senza LN vs BERT",
+        "runs":   [MAMBA_FRASI_NOLN, MAMBA_FRASI_CON_LN, BERT_FRASI],
+        "output": f"{OUT_SENT}/comparison_bert_mamba_ln_vs_noln_sentences.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba con/senza LN vs BERT (frasi)",
+    },
+    {
+        "name":   "mamba_transformer",
+        "runs":   [MAMBA_FRASI, TRANSFORMER_FRASI],
+        "output": f"{OUT_SENT}/comparison_mamba_transformer_sentences.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs DiffuTransformer (frasi)",
+    },
+    {
+        "name":   "bert_mamba_transformer",
+        "runs":   [MAMBA_FRASI, TRANSFORMER_FRASI, BERT_FRASI],
+        "output": f"{OUT_SENT}/comparison_bert_mamba_transformer_sentences.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs DiffuTransformer vs BERT (frasi)",
+    },
+    {
+        "name":   "mamba_ar",
+        "runs":   [MAMBA_FRASI, AR_FRASI],
+        "output": f"{OUT_SENT}/comparison_mamba_ar_sentences.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs Mamba AR (frasi)",
+    },
+    {
+        "name":   "mamba_ar_transformer",
+        "runs":   [MAMBA_FRASI, AR_FRASI, TRANSFORMER_FRASI],
+        "output": f"{OUT_SENT}/comparison_mamba_ar_transformer_sentences.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs Mamba AR vs DiffuTransformer (frasi)",
+    },
+    {
+        "name":   "bert_mamba_ar",
+        "runs":   [MAMBA_FRASI, AR_FRASI, BERT_FRASI],
+        "output": f"{OUT_SENT}/comparison_bert_mamba_ar_sentences.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs Mamba AR vs BERT (frasi)",
     },
     # --- blocchi ---
     {
         "name":   "bert_mamba_blocks",
         "runs":   [MAMBA_BLOCCHI, BERT_BLOCCHI],
-        "output": "../results/comparisons/blocks/comparison_bert_mamba_blocks.pdf",
+        "output": f"{OUT_BLOCKS}/comparison_bert_mamba_blocks.pdf",
         "title":  "Confronto probing multilayer — DiffuMamba vs BERT (blocchi)",
     },
     {
-        "name":   "bert_mamba_ln_blocks",
-        "runs":   [MAMBA_BLOCCHI_LN, BERT_BLOCCHI],
-        "output": "../results/comparisons/blocks/comparison_bert_mamba_ln_blocks.pdf",
-        "title":  "Confronto probing multilayer — DiffuMamba + LN vs BERT (blocchi)",
+        "name":   "bert_mamba_ln_vs_noln_blocks",
+        "runs":   [MAMBA_BLOCCHI_NOLN, MAMBA_BLOCCHI_CON_LN, BERT_BLOCCHI],
+        "output": f"{OUT_BLOCKS}/comparison_bert_mamba_ln_vs_noln_blocks.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba con/senza LN vs BERT (blocchi)",
     },
     {
-        "name":   "bert_mamba_ln_vs_noln_blocks",
-        "runs":   [MAMBA_BLOCCHI, MAMBA_BLOCCHI_LN, BERT_BLOCCHI],
-        "output": "../results/comparisons/blocks/comparison_bert_mamba_ln_vs_noln_blocks.pdf",
-        "title":  "Confronto probing multilayer — DiffuMamba con/senza LN vs BERT (blocchi)",
+        "name":   "mamba_transformer_blocks",
+        "runs":   [MAMBA_BLOCCHI, TRANSFORMER_BLOCCHI],
+        "output": f"{OUT_BLOCKS}/comparison_mamba_transformer_blocks.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs DiffuTransformer (blocchi)",
+    },
+    {
+        "name":   "bert_mamba_transformer_blocks",
+        "runs":   [MAMBA_BLOCCHI, TRANSFORMER_BLOCCHI, BERT_BLOCCHI],
+        "output": f"{OUT_BLOCKS}/comparison_bert_mamba_transformer_blocks.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs DiffuTransformer vs BERT (blocchi)",
+    },
+    {
+        "name":   "mamba_ar_blocks",
+        "runs":   [MAMBA_BLOCCHI, AR_BLOCCHI],
+        "output": f"{OUT_BLOCKS}/comparison_mamba_ar_blocks.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs Mamba AR (blocchi)",
+    },
+    {
+        "name":   "mamba_ar_transformer_blocks",
+        "runs":   [MAMBA_BLOCCHI, AR_BLOCCHI, TRANSFORMER_BLOCCHI],
+        "output": f"{OUT_BLOCKS}/comparison_mamba_ar_transformer_blocks.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs Mamba AR vs DiffuTransformer (blocchi)",
+    },
+    {
+        "name":   "bert_mamba_ar_blocks",
+        "runs":   [MAMBA_BLOCCHI, AR_BLOCCHI, BERT_BLOCCHI],
+        "output": f"{OUT_BLOCKS}/comparison_bert_mamba_ar_blocks.pdf",
+        "title":  "Confronto probing multilayer — DiffuMamba vs Mamba AR vs BERT (blocchi)",
     },
 ]
 
@@ -115,36 +206,61 @@ def load_curve(csv_path):
         df = df.reset_index().rename(columns={"checkpoint": "step"})
     return df.sort_values("step").reset_index(drop=True)
 
+
+def last_checkpoint_per_layer(run):
+    """
+    ρ per layer all'ultimo checkpoint, per ogni seed disponibile.
+    Ritorna (matrice seed × layer, step, n_seed) oppure None se manca tutto.
+    """
+    found = [p for p in run["csvs"] if os.path.exists(p)]
+    if not found:
+        return None
+    if len(found) < len(run["csvs"]):
+        print(f"[WARN] {run['label']}: {len(found)}/{len(run['csvs'])} seed disponibili")
+    rows, steps = [], set()
+    for p in found:
+        df = load_curve(p)
+        last = df.iloc[-1]
+        steps.add(int(last["step"]))
+        rows.append([last[c] for c in df.columns if c.startswith("layer_")])
+    if len(steps) > 1:
+        print(f"[WARN] {run['label']}: ultimo step diverso tra i seed {sorted(steps)}")
+    return np.array(rows), max(steps), len(found)
+
 # ============================================================
 # PLOT
 # ============================================================
 
 def plot_comparison(runs, output_file, title):
+    data = [(run, last_checkpoint_per_layer(run)) for run in runs]
+    if any(d is None for _, d in data):
+        missing = [run["label"] for run, d in data if d is None]
+        print(f"[WARN] '{title}': nessun CSV per {missing}, skip.")
+        return
+
     fig, ax = plt.subplots(figsize=(9, 5))
 
-    for run in runs:
-        df = load_curve(run["csv"])
-
-        # prende l'ultimo checkpoint disponibile
-        last_row = df.iloc[-1]
-        layer_cols = [c for c in df.columns if c.startswith("layer_")]
-        n_layers = len(layer_cols)
-        values = [last_row[c] for c in layer_cols]
-        x = list(range(n_layers))
-
-        ax.plot(x, values,
-                label=f"{run['label']} (step {int(last_row['step']):,})",
+    for run, (values, step, n) in data:
+        mean = values.mean(axis=0)
+        x = np.arange(len(mean))
+        seeds_txt = f"media su {n} seed, " if n > 1 else ""
+        ax.plot(x, mean,
+                label=f"{run['label']} ({seeds_txt}step {step:,})",
                 color=run["color"],
                 linestyle=run["linestyle"],
                 marker="o", markersize=5, linewidth=2)
+        if n > 1:
+            std = values.std(axis=0, ddof=1)
+            ax.fill_between(x, mean - std, mean + std, color=run["color"], alpha=0.15, linewidth=0)
 
-        # etichetta valore massimo
-        peak_idx = values.index(max(values))
-        ax.annotate(f"{max(values):.3f}",
-                    xy=(peak_idx, max(values)),
+        # etichetta valore massimo (della media)
+        peak_idx = int(mean.argmax())
+        ax.annotate(f"{mean[peak_idx]:.3f}",
+                    xy=(peak_idx, mean[peak_idx]),
                     xytext=(4, 6), textcoords="offset points",
                     fontsize=8, color=run["color"])
 
+    n_layers = len(mean)
     ax.set_xlabel("Layer", fontsize=12)
     ax.set_ylabel("Avg Spearman ρ", fontsize=12)
     ax.set_title(title, fontsize=13)

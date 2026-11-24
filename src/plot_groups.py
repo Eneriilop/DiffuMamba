@@ -2,10 +2,11 @@
 # plot_groups.py — Analisi per gruppi di feature (Miaschi et al. 2020)
 #
 # Per ogni confronto in COMPARISONS produce:
-#   1. group_final_<name>.pdf        — barchart avg ρ per gruppo (ultimo ckpt, layer migliore)
-#   2. group_curves_<name>.pdf       — curve durante il training per gruppo (layer migliore)
-#   3. group_peak_steps_<name>.csv   — step in cui ogni gruppo raggiunge X% del picco
-#   4. group_features_<name>.txt     — elenco delle feature escluse dal confronto
+# (in ../results/comparisons/<sentences|blocks>/, una sottocartella per tipo)
+#   1. group_final/group_final_<name>.pdf           — barchart avg ρ per gruppo (ultimo ckpt, layer migliore)
+#   2. group_curves/group_curves_<name>.pdf         — curve durante il training per gruppo (layer migliore)
+#   3. group_peak_steps/group_peak_steps_<name>.csv — step in cui ogni gruppo raggiunge X% del picco
+#   4. group_features/group_features_<name>.txt     — elenco delle feature escluse dal confronto
 #
 # Il confronto usa SOLO le feature della Table 1 del paper che sono
 # presenti in tutte le run del confronto. Le altre (extra rispetto al
@@ -15,6 +16,11 @@
 # Uso: python plot_groups.py              → tutti i confronti
 #      python plot_groups.py <name> ...   → solo i confronti indicati
 #      (modificare COMPARISONS e THRESHOLD_PERCS nella sezione CONFIGURAZIONE)
+#
+# Seed: per DiffuMamba e DiffuTransformer le medie per gruppo sono calcolate
+# per ogni seed e poi mediate; barre d'errore e bande = ±1 dev. std sui seed.
+# Layer migliore e tabella step-al-picco sono calcolati sulla media.
+# BERT: 3 seed (42/43/44, forniti da terzi), trattati come gli altri modelli.
 # ============================================================
 
 import pandas as pd
@@ -23,45 +29,83 @@ import matplotlib.ticker as ticker
 import numpy as np
 import os
 import sys
+from seeds import SEEDS
+from runs import all_metrics_csv, bert_csvs
 
 # ============================================================
 # CONFIGURAZIONE
 # ============================================================
 
-MAMBA_FRASI = {
-    "label":     "DiffuMamba — frasi (Run 4, 128 tok)",
-    "csv":       "../results/all_metrics_run4.csv",
+# Convenzione: "DiffuMamba" e "DiffuTransformer" = probing con LayerNorm sugli
+# hidden states, per confronto corretto con gli hidden_states post-LN di BERT.
+# La versione senza LN compare solo nel confronto con/senza LN.
+
+
+def seed_csvs(model, data, ln=True):
+    """CSV all_metrics di tutti i seed di un modello."""
+    return [all_metrics_csv(model, data, s, ln=ln) for s in SEEDS]
+
+
+MAMBA_FRASI_NOLN = {
+    "label":     "DiffuMamba senza LN — frasi (128 tok)",
+    "csvs":      seed_csvs("mamba", "sent", ln=False),
     "color":     "#2196F3",
     "linestyle": "-",
 }
-MAMBA_FRASI_LN = {
-    "label":     "DiffuMamba — frasi + LN (Run 4, 128 tok)",
-    "csv":       "../results/all_metrics_run4_ln.csv",   # LayerNorm sugli hidden states
+MAMBA_FRASI = {
+    "label":     "DiffuMamba — frasi (128 tok)",
+    "csvs":      seed_csvs("mamba", "sent"),
     "color":     "#3F51B5",
     "linestyle": ":",
 }
-MAMBA_BLOCCHI = {
-    "label":     "DiffuMamba — blocchi (Run 5, 512 tok)",
-    "csv":       "../results/all_metrics_run5.csv",
+MAMBA_FRASI_CON_LN = {**MAMBA_FRASI, "label": "DiffuMamba con LN — frasi (128 tok)"}
+TRANSFORMER_FRASI = {
+    "label":     "DiffuTransformer — frasi (128 tok)",
+    "csvs":      seed_csvs("transformer", "sent"),
+    "color":     "#9C27B0",
+    "linestyle": "--",
+}
+MAMBA_BLOCCHI_NOLN = {
+    "label":     "DiffuMamba senza LN — blocchi (512 tok)",
+    "csvs":      seed_csvs("mamba", "blocks", ln=False),
     "color":     "#FF5722",
     "linestyle": "--",
 }
-MAMBA_BLOCCHI_LN = {
-    "label":     "DiffuMamba — blocchi + LN (Run 5, 512 tok)",
-    "csv":       "../results/all_metrics_run5_ln.csv",   # LayerNorm sugli hidden states
+MAMBA_BLOCCHI = {
+    "label":     "DiffuMamba — blocchi (512 tok)",
+    "csvs":      seed_csvs("mamba", "blocks"),
     "color":     "#BF360C",
     "linestyle": ":",
 }
+MAMBA_BLOCCHI_CON_LN = {**MAMBA_BLOCCHI, "label": "DiffuMamba con LN — blocchi (512 tok)"}
+TRANSFORMER_BLOCCHI = {
+    "label":     "DiffuTransformer — blocchi (512 tok)",
+    "csvs":      seed_csvs("transformer", "blocks"),
+    "color":     "#6A1B9A",
+    "linestyle": "--",
+}
+AR_FRASI = {
+    "label":     "Mamba AR — frasi (128 tok)",
+    "csvs":      seed_csvs("ar", "sent"),
+    "color":     "#00897B",
+    "linestyle": "-",
+}
+AR_BLOCCHI = {
+    "label":     "Mamba AR — blocchi (512 tok)",
+    "csvs":      seed_csvs("ar", "blocks"),
+    "color":     "#004D40",
+    "linestyle": "-",
+}
 BERT_FRASI = {
     "label":     "BERT medium — frasi",
-    "csv":       "../probing_results/bert/bert_medium_orig_probing.csv",  # formato lungo
+    "csvs":      bert_csvs("sent"),        # formato lungo, un file per seed
     "color":     "#4CAF50",
     "linestyle": "-.",
     "layer_offset": -1,   # layer 1..8 → 0..7, come DiffuMamba
 }
 BERT_BLOCCHI = {
     "label":     "BERT medium — blocchi (512 tok)",
-    "csv":       "../results/bert_medium_dbmdz_blocks_512_probing.csv",   # formato lungo
+    "csvs":      bert_csvs("blocks"),      # formato lungo, un file per seed
     "color":     "#2E7D32",
     "linestyle": "-.",
     "layer_offset": -1,
@@ -77,22 +121,46 @@ COMPARISONS = [
         "subdir": "sentences",
     },
     {
-        "name":   "bert_vs_mamba_frasi_ln",
-        "title":  "BERT vs DiffuMamba + LN — frasi",
-        "runs":   [MAMBA_FRASI_LN, BERT_FRASI],
+        "name":   "bert_vs_mamba_frasi_ln_vs_noln",
+        "title":  "BERT vs DiffuMamba con/senza LN — frasi",
+        "runs":   [MAMBA_FRASI_NOLN, MAMBA_FRASI_CON_LN, BERT_FRASI],
         "subdir": "sentences",
     },
     {
-        "name":   "bert_vs_mamba_frasi_ln_vs_noln",
-        "title":  "BERT vs DiffuMamba con/senza LN — frasi",
-        "runs":   [MAMBA_FRASI, MAMBA_FRASI_LN, BERT_FRASI],
+        "name":   "mamba_vs_transformer_frasi",
+        "title":  "DiffuMamba vs DiffuTransformer — frasi",
+        "runs":   [MAMBA_FRASI, TRANSFORMER_FRASI],
+        "subdir": "sentences",
+    },
+    {
+        "name":   "bert_vs_mamba_vs_transformer_frasi",
+        "title":  "BERT vs DiffuMamba vs DiffuTransformer — frasi",
+        "runs":   [MAMBA_FRASI, TRANSFORMER_FRASI, BERT_FRASI],
+        "subdir": "sentences",
+    },
+    {
+        "name":   "mamba_vs_ar_frasi",
+        "title":  "DiffuMamba vs Mamba AR — frasi",
+        "runs":   [MAMBA_FRASI, AR_FRASI],
+        "subdir": "sentences",
+    },
+    {
+        "name":   "mamba_vs_transformer_vs_ar_frasi",
+        "title":  "DiffuMamba vs DiffuTransformer vs Mamba AR — frasi",
+        "runs":   [MAMBA_FRASI, TRANSFORMER_FRASI, AR_FRASI],
+        "subdir": "sentences",
+    },
+    {
+        "name":   "bert_vs_mamba_vs_ar_frasi",
+        "title":  "BERT vs DiffuMamba vs Mamba AR — frasi",
+        "runs":   [MAMBA_FRASI, AR_FRASI, BERT_FRASI],
         "subdir": "sentences",
     },
     # --- blocchi ---
     {
         "name":   "mamba_frasi_vs_blocchi",
         "title":  "DiffuMamba — frasi vs blocchi",
-        "runs":   [MAMBA_FRASI, MAMBA_BLOCCHI],
+        "runs":   [MAMBA_FRASI, MAMBA_BLOCCHI],   # entrambi con LN
         "subdir": "blocks",
     },
     {
@@ -102,15 +170,39 @@ COMPARISONS = [
         "subdir": "blocks",
     },
     {
-        "name":   "bert_vs_mamba_blocchi_ln",
-        "title":  "BERT vs DiffuMamba + LN — blocchi",
-        "runs":   [MAMBA_BLOCCHI_LN, BERT_BLOCCHI],
+        "name":   "bert_vs_mamba_blocchi_ln_vs_noln",
+        "title":  "BERT vs DiffuMamba con/senza LN — blocchi",
+        "runs":   [MAMBA_BLOCCHI_NOLN, MAMBA_BLOCCHI_CON_LN, BERT_BLOCCHI],
         "subdir": "blocks",
     },
     {
-        "name":   "bert_vs_mamba_blocchi_ln_vs_noln",
-        "title":  "BERT vs DiffuMamba con/senza LN — blocchi",
-        "runs":   [MAMBA_BLOCCHI, MAMBA_BLOCCHI_LN, BERT_BLOCCHI],
+        "name":   "mamba_vs_transformer_blocchi",
+        "title":  "DiffuMamba vs DiffuTransformer — blocchi",
+        "runs":   [MAMBA_BLOCCHI, TRANSFORMER_BLOCCHI],
+        "subdir": "blocks",
+    },
+    {
+        "name":   "bert_vs_mamba_vs_transformer_blocchi",
+        "title":  "BERT vs DiffuMamba vs DiffuTransformer — blocchi",
+        "runs":   [MAMBA_BLOCCHI, TRANSFORMER_BLOCCHI, BERT_BLOCCHI],
+        "subdir": "blocks",
+    },
+    {
+        "name":   "mamba_vs_ar_blocchi",
+        "title":  "DiffuMamba vs Mamba AR — blocchi",
+        "runs":   [MAMBA_BLOCCHI, AR_BLOCCHI],
+        "subdir": "blocks",
+    },
+    {
+        "name":   "mamba_vs_transformer_vs_ar_blocchi",
+        "title":  "DiffuMamba vs DiffuTransformer vs Mamba AR — blocchi",
+        "runs":   [MAMBA_BLOCCHI, TRANSFORMER_BLOCCHI, AR_BLOCCHI],
+        "subdir": "blocks",
+    },
+    {
+        "name":   "bert_vs_mamba_vs_ar_blocchi",
+        "title":  "BERT vs DiffuMamba vs Mamba AR — blocchi",
+        "runs":   [MAMBA_BLOCCHI, AR_BLOCCHI, BERT_BLOCCHI],
         "subdir": "blocks",
     },
 ]
@@ -309,21 +401,29 @@ def plot_final_barchart(runs_data, out_path, title):
     for i, rd in enumerate(runs_data):
         last_step = rd["df"]["step"].max()
         best_lay  = rd["best_layer"]
-        df_last   = rd["group_df"]
-        df_point  = df_last[(df_last["step"] == last_step) & (df_last["layer"] == best_lay)]
 
+        def point(gdf):
+            return gdf[(gdf["step"] == last_step) & (gdf["layer"] == best_lay)]
+
+        df_point, std_point = point(rd["group_df"]), point(rd["group_std"])
         vals = [float(df_point[g].values[0]) if g in df_point.columns else np.nan
                 for g in present_groups]
+        errs = [float(std_point[g].values[0]) if g in std_point.columns else np.nan
+                for g in present_groups]
+        errs = [0.0 if np.isnan(e) else e for e in errs]
 
         offset = (i - (n_runs - 1) / 2) * width
+        seeds_txt = f", media su {rd['n']} seed" if rd["n"] > 1 else ""
         bars = ax.bar(x + offset, vals, width,
-                      label=f"{rd['label']} (L{best_lay})",
+                      yerr=errs if rd["n"] > 1 else None, capsize=2,
+                      error_kw={"elinewidth": 0.8, "ecolor": "#333333"},
+                      label=f"{rd['label']} (L{best_lay}{seeds_txt})",
                       color=rd["color"], alpha=0.85, edgecolor="white")
 
-        # etichetta valore sopra ogni barra
-        for bar, v in zip(bars, vals):
+        # etichetta valore (media) sopra ogni barra, oltre la barra d'errore
+        for bar, v, e in zip(bars, vals, errs):
             if not np.isnan(v):
-                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.003,
+                ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + e + 0.003,
                         f"{v:.3f}", ha="center", va="bottom", fontsize=7)
 
     ax.set_xticks(x)
@@ -363,14 +463,18 @@ def plot_learning_curves(runs_data, out_path, title):
         ax = axes[gi]
         for rd in runs_data:
             best_lay = rd["best_layer"]
-            df_grp = rd["group_df"][rd["group_df"]["layer"] == best_lay].copy()
-            df_grp = df_grp.sort_values("step")
+            df_grp = rd["group_df"][rd["group_df"]["layer"] == best_lay].sort_values("step")
+            df_std = rd["group_std"][rd["group_std"]["layer"] == best_lay].sort_values("step")
             if grp in df_grp.columns:
                 ax.plot(df_grp["step"], df_grp[grp],
                         label=rd["label"],
                         color=rd["color"],
                         linestyle=rd["linestyle"],
                         linewidth=1.8, marker=".", markersize=4)
+                if rd["n"] > 1:
+                    m, s = df_grp[grp].values, df_std[grp].values
+                    ax.fill_between(df_grp["step"], m - s, m + s,
+                                    color=rd["color"], alpha=0.15, linewidth=0)
 
         ax.set_title(grp, fontsize=11, fontweight="bold")
         ax.set_xlabel("Step", fontsize=9)
@@ -450,19 +554,35 @@ def compute_peak_steps(runs_data, out_path):
 # MAIN
 # ============================================================
 
-def prepare_run(run_cfg, df, used, group_map):
-    """Layer migliore e medie per gruppo, calcolati sulle sole feature usate."""
+def prepare_run(run_cfg, dfs, used, group_map):
+    """
+    dfs: un DataFrame per seed. Medie per gruppo calcolate per seed e poi
+    mediate (media e dev. std sui seed), sulle sole feature usate e sui soli
+    (step, layer) presenti in tutti i seed. Il layer migliore è scelto sulla media.
+    """
+    keys = ["step", "layer"]
+    common = set.intersection(*[set(map(tuple, d[keys].values)) for d in dfs])
+    dfs = [d[[tuple(r) in common for r in d[keys].values]] for d in dfs]
+
+    per_seed = pd.concat([group_avg_by_step_layer(d, used, group_map) for d in dfs])
+    group_df  = per_seed.groupby(keys).mean().reset_index()
+    group_std = (per_seed.groupby(keys).std(ddof=1).reset_index() if len(dfs) > 1
+                 else group_df.assign(**{g: np.nan for g in GROUP_ORDER}))
+    mean_df = pd.concat([d[keys + used] for d in dfs]).groupby(keys).mean().reset_index()
+
     best_lay = BEST_LAYER
     if best_lay is None:
-        best_lay = best_layer_for_run(df, used, group_map)
-    print(f"{run_cfg['label']} — layer migliore: {best_lay}")
+        best_lay = best_layer_for_run(mean_df, used, group_map)
+    print(f"{run_cfg['label']} — seed: {len(dfs)} — layer migliore: {best_lay}")
 
     return {
         "label":      run_cfg["label"],
         "color":      run_cfg["color"],
         "linestyle":  run_cfg["linestyle"],
-        "df":         df,
-        "group_df":   group_avg_by_step_layer(df, used, group_map),
+        "df":         mean_df,
+        "group_df":   group_df,
+        "group_std":  group_std,
+        "n":          len(dfs),
         "best_layer": best_lay,
     }
 
@@ -477,35 +597,40 @@ def main(only=None):
 
         loaded = []
         for run_cfg in comp["runs"]:
-            if not os.path.exists(run_cfg["csv"]):
-                print(f"[WARN] CSV non trovato, skip: {run_cfg['csv']}")
+            found = [p for p in run_cfg["csvs"] if os.path.exists(p)]
+            if not found:
+                print(f"[WARN] nessun CSV per {run_cfg['label']}")
                 continue
-            loaded.append((run_cfg, *load_run(run_cfg["csv"],
-                                              run_cfg.get("layer_offset", 0))))
+            if len(found) < len(run_cfg["csvs"]):
+                print(f"[WARN] {run_cfg['label']}: {len(found)}/{len(run_cfg['csvs'])} seed disponibili")
+            runs = [load_run(p, run_cfg.get("layer_offset", 0)) for p in found]
+            feats = sorted(set.intersection(*[set(fc) for _, fc in runs]))
+            loaded.append((run_cfg, [df for df, _ in runs], feats))
 
         if len(loaded) < len(comp["runs"]):
             print(f"[WARN] '{name}': non tutte le run sono disponibili, skip.")
             continue
 
         out_dir = os.path.join(OUT_DIR, comp.get("subdir", ""))
-        os.makedirs(out_dir, exist_ok=True)
+        for sub in ("group_final", "group_curves", "group_peak_steps", "group_features"):
+            os.makedirs(os.path.join(out_dir, sub), exist_ok=True)
 
         print("\n--- Feature ---")
         used, group_map = feature_report(
             comp, [(cfg, fc) for cfg, _, fc in loaded],
-            f"{out_dir}/group_features_{name}.txt")
+            f"{out_dir}/group_features/group_features_{name}.txt")
 
         print()
-        runs_data = [prepare_run(cfg, df, used, group_map) for cfg, df, _ in loaded]
+        runs_data = [prepare_run(cfg, dfs, used, group_map) for cfg, dfs, _ in loaded]
 
         print("\n--- Plot 1: barchart finale ---")
-        plot_final_barchart(runs_data, f"{out_dir}/group_final_{name}.pdf", comp["title"])
+        plot_final_barchart(runs_data, f"{out_dir}/group_final/group_final_{name}.pdf", comp["title"])
 
         print("--- Plot 2: learning curves per gruppo ---")
-        plot_learning_curves(runs_data, f"{out_dir}/group_curves_{name}.pdf", comp["title"])
+        plot_learning_curves(runs_data, f"{out_dir}/group_curves/group_curves_{name}.pdf", comp["title"])
 
         print("--- Tabella: step al picco ---")
-        compute_peak_steps(runs_data, f"{out_dir}/group_peak_steps_{name}.csv")
+        compute_peak_steps(runs_data, f"{out_dir}/group_peak_steps/group_peak_steps_{name}.csv")
 
 
 if __name__ == "__main__":

@@ -6,7 +6,13 @@ Codice del progetto DiffuMamba, con script per addestramento, valutazione e prob
 
 - `src/`: codice attuale
 - `src/archive/`: script non più in uso
-- `results/`: metriche e curve di apprendimento
+- `results/`: risultati della valutazione
+  - `all_metrics/`: ρ per feature × layer × step (`all_metrics_<run>.csv`, medie `*_mean.csv`)
+  - `learning_curves/`: ρ media per layer × step (`learning_curve_<run>.csv`, medie `*_mean.csv`)
+  - `bert/`: CSV di probing di BERT medium (3 seed, forniti da terzi)
+  - `analysis/`: analisi per layer e gruppi di feature
+  - `comparisons/{sentences,blocks}/`: grafici di confronto, una sottocartella per tipo
+  - `old/`: risultati single-seed precedenti
 - `probing_results/`: risultati del probing inclusi nella repo
 - `v0/`: versione precedente, non più mantenuta
 

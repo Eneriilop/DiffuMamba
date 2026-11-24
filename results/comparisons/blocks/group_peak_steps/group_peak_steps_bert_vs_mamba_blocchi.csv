@@ -1,0 +1,17 @@
+Run,Gruppo,85%,90%,95%,peak_rho
+BERT medium — blocchi (512 tok),RawText,400,12000,20000,0.9027
+BERT medium — blocchi (512 tok),POS,12000,20000,20000,0.7916
+BERT medium — blocchi (512 tok),VerbInflection,20000,20000,24000,0.6659
+BERT medium — blocchi (512 tok),VerbPredicate,20000,20000,32000,0.4337
+BERT medium — blocchi (512 tok),TreeStructure,0,400,20000,0.8353
+BERT medium — blocchi (512 tok),Order,20000,24000,36000,0.7437
+BERT medium — blocchi (512 tok),SyntacticDep,20000,20000,24000,0.6833
+BERT medium — blocchi (512 tok),Subord,2000,20000,24000,0.7999
+DiffuMamba — blocchi (512 tok),RawText,800,1200,2400,0.8852
+DiffuMamba — blocchi (512 tok),POS,1200,1600,2800,0.7958
+DiffuMamba — blocchi (512 tok),VerbInflection,2000,3600,12000,0.666
+DiffuMamba — blocchi (512 tok),VerbPredicate,1600,2400,8000,0.4213
+DiffuMamba — blocchi (512 tok),TreeStructure,0,800,1200,0.8186
+DiffuMamba — blocchi (512 tok),Order,1600,3600,16000,0.7351
+DiffuMamba — blocchi (512 tok),SyntacticDep,1600,2000,8000,0.6866
+DiffuMamba — blocchi (512 tok),Subord,800,1600,8000,0.7866

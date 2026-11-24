@@ -117,11 +117,13 @@ class DiffuMamba(nn.Module):
         nn.init.zeros_(self.time_emb.bias)
 
 
-    def forward(self, input_ids: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
+    def forward(self, input_ids: torch.Tensor, t: torch.Tensor,
+                attention_mask: torch.Tensor = None) -> torch.Tensor:
         """
-        input_ids : (B, L)
-        t         : (B,)
-        returns   : (B, L, vocab_size)
+        input_ids      : (B, L)
+        t              : (B,)
+        attention_mask : ignorata, serve solo per avere la stessa firma di DiffuTransformer
+        returns        : (B, L, vocab_size)
         """
         x = self.token_emb(input_ids)          # (B, L, D)
         t_vec = self.time_emb(t.unsqueeze(1))  # (B, D)
@@ -132,6 +134,82 @@ class DiffuMamba(nn.Module):
 
         x = self.norm_out(x)
         return self.lm_head(x)                 # (B, L, vocab_size)
+
+    def count_params(self) -> int:
+        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+
+
+# ============================================================
+# Mamba AR — ablation dell'obiettivo
+# ============================================================
+# Mamba autoregressivo classico (next-token prediction), unidirezionale:
+#   TokenEmbedding
+#       ↓
+#   N × MambaBlock (un solo Mamba, sinistra → destra)
+#       ↓
+#   LayerNorm → LM Head
+#
+# Rispetto a DiffuMamba: niente direzione backward, niente timestep
+# embedding (non c'è rumore). Per avere gli stessi parametri ogni blocco
+# usa expand = 4 invece di 2 (vedi config_ar_sentences.py / config_ar_blocks.py).
+# ------------------------------------------------------------
+
+class MambaBlock(nn.Module):
+    """Blocco pre-LN unidirezionale: x + Mamba(LN(x)). Causale: il token i vede solo i token ≤ i."""
+
+    def __init__(self, d_model, d_state, d_conv, expand):
+        super().__init__()
+        self.norm = nn.LayerNorm(d_model)
+        self.mamba = Mamba(d_model=d_model, d_state=d_state, d_conv=d_conv, expand=expand)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return x + self.mamba(self.norm(x))         # left → right + residual connection
+
+
+class MambaAR(nn.Module):
+
+    def __init__(self, cfg):
+        # cfg: config_ar_sentences (frasi 128) o config_ar_blocks (blocchi 512)
+        super().__init__()
+
+        self.token_emb = nn.Embedding(
+            num_embeddings=31102,
+            embedding_dim=cfg.HIDDEN_SIZE,
+            padding_idx=cfg.PAD_TOKEN_ID,
+        )
+
+        self.layers = nn.ModuleList([
+            MambaBlock(
+                d_model=cfg.HIDDEN_SIZE,
+                d_state=cfg.STATE_SIZE,
+                d_conv=cfg.CONV_KERNEL,
+                expand=cfg.EXPAND,
+            )
+            for _ in range(cfg.NUM_LAYERS)
+        ])
+
+        self.norm_out = nn.LayerNorm(cfg.HIDDEN_SIZE)
+
+        # LM head con weight tying, come DiffuMamba
+        self.lm_head = nn.Linear(cfg.HIDDEN_SIZE, 31102, bias=False)
+        self.lm_head.weight = self.token_emb.weight
+
+        nn.init.normal_(self.token_emb.weight, std=0.02)
+
+    def forward(self, input_ids: torch.Tensor, t: torch.Tensor = None,
+                attention_mask: torch.Tensor = None) -> torch.Tensor:
+        """
+        input_ids      : (B, L)
+        t, attention_mask : ignorati (stessa firma degli altri modelli);
+                         il padding è a destra e, essendo il modello causale,
+                         non influenza i token reali
+        returns        : (B, L, vocab_size); la posizione i predice il token i+1
+        """
+        x = self.token_emb(input_ids)
+        for layer in self.layers:
+            x = layer(x)
+        x = self.norm_out(x)
+        return self.lm_head(x)
 
     def count_params(self) -> int:
         return sum(p.numel() for p in self.parameters() if p.requires_grad)

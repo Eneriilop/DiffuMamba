@@ -1,0 +1,37 @@
+modello,gruppo,step_90pct,std
+DiffuMamba,RawText,1200.0,0.0
+DiffuMamba,POS,1600.0,0.0
+DiffuMamba,VerbInflection,8000.0,0.0
+DiffuMamba,VerbPredicate,3066.6667,832.6664
+DiffuMamba,TreeStructure,800.0,0.0
+DiffuMamba,Order,6533.3333,2540.3412
+DiffuMamba,SyntacticDep,2400.0,0.0
+DiffuMamba,Subord,2133.3333,230.9401
+DiffuMamba,ALL,2400.0,0.0
+DiffuTransformer,RawText,2000.0,0.0
+DiffuTransformer,POS,3066.6667,230.9401
+DiffuTransformer,VerbInflection,9333.3333,2309.4011
+DiffuTransformer,VerbPredicate,5333.3333,2309.4011
+DiffuTransformer,TreeStructure,800.0,0.0
+DiffuTransformer,Order,9333.3333,2309.4011
+DiffuTransformer,SyntacticDep,8000.0,0.0
+DiffuTransformer,Subord,2800.0,400.0
+DiffuTransformer,ALL,4000.0,0.0
+Mamba AR,RawText,800.0,0.0
+Mamba AR,POS,1200.0,0.0
+Mamba AR,VerbInflection,2933.3333,461.8802
+Mamba AR,VerbPredicate,1733.3333,230.9401
+Mamba AR,TreeStructure,400.0,0.0
+Mamba AR,Order,2133.3333,611.0101
+Mamba AR,SyntacticDep,1200.0,0.0
+Mamba AR,Subord,800.0,0.0
+Mamba AR,ALL,1200.0,0.0
+BERT,RawText,1600.0,0.0
+BERT,POS,5200.0,2433.105
+BERT,VerbInflection,9333.3333,2309.4011
+BERT,VerbPredicate,10666.6667,2309.4011
+BERT,TreeStructure,133.3333,230.9401
+BERT,Order,12000.0,0.0
+BERT,SyntacticDep,8000.0,0.0
+BERT,Subord,5200.0,2433.105
+BERT,ALL,8000.0,0.0

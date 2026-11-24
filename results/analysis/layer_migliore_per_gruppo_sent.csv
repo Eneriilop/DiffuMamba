@@ -1,0 +1,33 @@
+modello,gruppo,layer_migliore,rho_al_layer_migliore
+DiffuMamba,RawText,1,0.88
+DiffuMamba,POS,1,0.8009
+DiffuMamba,VerbInflection,4,0.6806
+DiffuMamba,VerbPredicate,4,0.4338
+DiffuMamba,TreeStructure,5,0.8229
+DiffuMamba,Order,5,0.7641
+DiffuMamba,SyntacticDep,2,0.6883
+DiffuMamba,Subord,4,0.7989
+DiffuTransformer,RawText,0,0.9017
+DiffuTransformer,POS,1,0.7886
+DiffuTransformer,VerbInflection,4,0.6736
+DiffuTransformer,VerbPredicate,3,0.4406
+DiffuTransformer,TreeStructure,2,0.8314
+DiffuTransformer,Order,3,0.7605
+DiffuTransformer,SyntacticDep,3,0.6825
+DiffuTransformer,Subord,2,0.8064
+Mamba AR,RawText,0,0.8845
+Mamba AR,POS,2,0.7999
+Mamba AR,VerbInflection,4,0.6648
+Mamba AR,VerbPredicate,4,0.4266
+Mamba AR,TreeStructure,4,0.8103
+Mamba AR,Order,4,0.7558
+Mamba AR,SyntacticDep,3,0.6862
+Mamba AR,Subord,4,0.7782
+BERT,RawText,0,0.908
+BERT,POS,2,0.8058
+BERT,VerbInflection,4,0.674
+BERT,VerbPredicate,4,0.4355
+BERT,TreeStructure,3,0.8296
+BERT,Order,4,0.7645
+BERT,SyntacticDep,3,0.6948
+BERT,Subord,4,0.809
